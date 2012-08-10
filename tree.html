@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tree</title>
+<style>
+#canvas {
+	border: 1px solid #9C9898;
+}
+</style>
+</head>
+<body>
+	<canvas id="canvas" width="640" height="480"></canvas>
+</body>
+
+<script>
+	window.requestAnimFrame = (function(callback) {
+		return window.requestAnimationFrame || 
+		window.webkitRequestAnimationFrame || 
+		window.mozRequestAnimationFrame || 
+		window.oRequestAnimationFrame || 
+		window.msRequestAnimationFrame ||
+		function(callback) {
+			window.setTimeout(callback, 1000 / 60);
+		};
+	})();
+
+	var linearSpeed = 5;
+	var canvas = document.getElementById("canvas");
+	var context = canvas.getContext("2d");
+	
+	function animate(lastTime, tree) {
+		
+		// update
+		var date = new Date();
+		var time = date.getTime();
+		var timeDiff = time - lastTime;
+		var linearDistEachFrame = linearSpeed * timeDiff / 1000;
+		tree.angle += linearDistEachFrame;
+		if(tree.angle > tree.maxAngle || tree.angle < tree.minAngle) {
+			linearSpeed *= -1;
+		}
+		if(tree.angle > tree.maxAngle) {
+			tree.angle = tree.maxAngle;
+		}
+		if(tree.angle < tree.minAngle) {
+			tree.angle = tree.minAngle;
+		}
+		lastTime = time;
+
+		// clear
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		context.save();
+		// draw
+		context.translate(tree.x, tree.y);
+		drawTree(context, tree);
+		context.restore();
+		
+		// request new frame
+		requestAnimFrame(function() {
+		  animate(lastTime, tree);
+		});
+	}
+
+	function drawTree(context, tree, level) {
+		if (level == null) {
+			level = 0;
+		  }
+		if(level >= tree.levels) {
+			return;
+		}
+		var branches = level * tree.extraSegments + 1;
+		var degrees = (branches - 1) * tree.angle / 2;
+		context.lineWidth = (tree.levels - level) * tree.segmentWidthFactor;
+		for(var branch = 0; branch < branches; branch++) {
+			context.save();
+       		context.strokeStyle = 'rgb(' +  (125 - (level) * 25) + ', 80, 25)';
+
+			context.rotate((branch * tree.angle - degrees) * (Math.PI / 180.0));
+       		
+       		context.beginPath();
+       		context.lineTo(0, 0);
+       		context.lineTo(0, -tree.segmentHeight);
+       		context.stroke();
+
+       		context.translate(0, -tree.segmentHeight*0.94);
+			context.scale(tree.segmentHeightFactor, tree.segmentHeightFactor);
+       		
+       		drawTree(context, tree, level + 1);
+       		
+       		context.restore();
+		}
+	}
+
+	window.onload = function() {
+
+		var tree = {
+			x: 320,
+			y: 470,
+			segmentHeight: 130,
+			levels: 5,
+			angle: 30,
+			segmentHeightFactor: 0.7,
+			segmentWidthFactor: 2,
+			maxAngle: 40,
+			minAngle: 20,
+			extraSegments: 3
+		};
+	
+		var date = new Date();
+		var time = date.getTime();
+		animate(time, tree);
+	};
+
+    </script>
+    
+</html>
